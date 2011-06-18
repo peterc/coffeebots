@@ -8,13 +8,19 @@
 		<script type="text/coffeescript" src="coffeebots.coffee"></script>
 	</head>
 	<body>
-		<canvas id="arena" width="800" height="450"></canvas>
+		<div id="header" class="contained">
+			<div id="controls">
+				<button id="run">START BATTLE!</button>
+				<button id="pause">Pause</button>
+				<button id="reset">Clear</button>
+			</div>
+			<div class="title"><strong><span class="coffee">Coffee</span>bots</strong> (<a href="https://github.com/peterc/coffeebots">source</a>)</div>
+		</div>
+
+		<canvas id="arena" width="800" height="450"></canvas>		
 		
-		<div id="controls">
+		<div id="bots" class="contained">
 			<button id="addbot">Add Robot</button>
-			<button id="run">START BATTLE!</button>
-			<button id="pause">Pause</button>
-			<button id="reset">Reset</button>
 		</div>
 	</body>
 </html>

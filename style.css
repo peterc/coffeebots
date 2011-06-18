@@ -12,8 +12,19 @@ body {
 	background: url(/images/bg.png) top left;
 }
 
-#controls{
-	text-align: center;
+.contained {
+	text-align: left;
 	width: 800px;
 	margin: 8px auto;
+}
+
+.title {
+}
+
+#controls {
+	float: right;
+}
+
+.coffee {
+	color: #960;
 }
