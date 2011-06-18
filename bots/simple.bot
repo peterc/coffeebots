@@ -1,0 +1,4 @@
+name: 'simple'
+creator: 'Peter Cooper'
+work: ->
+	@drive(210, 4)

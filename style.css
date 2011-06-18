@@ -2,6 +2,11 @@ body {
 	background-color: #fff;
 	font-family: 'Helvetica Neue', 'Trebuchet MS', Arial, sans-serif;
 	color: #222;
+	font-size: 18px;
+}
+
+A { 
+	color: #960;
 }
 
 #arena {
@@ -27,4 +32,10 @@ body {
 
 .coffee {
 	color: #960;
+}
+
+#bots .bot {
+	border-bottom: 1px solid #ddd;
+	padding: 8px;
+	font-size: 14px;
 }

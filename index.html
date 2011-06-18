@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title></title>
+		<title>Coffeebots: CoffeeScript Powered Robot Wars</title>
 		<link rel="stylesheet" href="style.css">
-		<script type="text/javascript" src="jquery.min.js"></script>
-		<script type="text/javascript" src="coffee-script.js"></script>
+		<script type="text/javascript" src="/vendor/jquery.min.js"></script>
+		<script type="text/javascript" src="/vendor/jquery.simplemodal-1.4.1.js"></script>
+		<script type="text/javascript" src="/vendor/coffee-script.js"></script>
 		<script type="text/coffeescript" src="coffeebots.coffee"></script>
 	</head>
 	<body>
@@ -12,14 +13,16 @@
 			<div id="controls">
 				<button id="run">START BATTLE!</button>
 				<button id="pause">Pause</button>
-				<button id="reset">Clear</button>
+				<button id="reset">Reset</button>
 			</div>
 			<div class="title"><strong><span class="coffee">Coffee</span>bots</strong> (<a href="https://github.com/peterc/coffeebots">source</a>)</div>
 		</div>
 
 		<canvas id="arena" width="800" height="450"></canvas>		
 		
-		<div id="bots" class="contained">
+		<div id="botlist" class="contained">
+			<div id="bots">
+			</div>
 			<button id="addbot">Add Robot</button>
 		</div>
 	</body>
