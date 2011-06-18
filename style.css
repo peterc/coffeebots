@@ -1,0 +1,19 @@
+body {
+	background-color: #fff;
+	font-family: 'Helvetica Neue', 'Trebuchet MS', Arial, sans-serif;
+	color: #222;
+}
+
+#arena {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	border: 6px solid #ddd;
+	background: url(/images/bg.png) top left;
+}
+
+#controls{
+	text-align: center;
+	width: 800px;
+	margin: 8px auto;
+}
