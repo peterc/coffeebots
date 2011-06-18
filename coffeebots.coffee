@@ -148,6 +148,7 @@ $ ->
 		setTimeout arena.draw, 50
 		setTimeout arena.draw, 150
 	$('button#run').click ->
+		$(this).attr('disabled', true)
 		arena.run()
 	$('button#reset').click ->
 		$('#controls button').attr('disabled', true)
