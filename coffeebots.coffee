@@ -1,8 +1,9 @@
-FPS = 60
+FPS = 45
 MIN_DISTANCE_BETWEEN = 100
 SPRITES = ['yellow.png', 'red.png', 'purple.png', 'green.png', 'blue.png']
 DEGREES_IN_ONE_RADIAN = 57.295800000006835
 MAX_PLAYERS = 5
+BOT_FILES = ['simple.bot']
 
 class Arena
 	constructor: (@canvasId = 'arena') ->
@@ -46,13 +47,37 @@ class Arena
 			break if (@robots.length > 0) && (min > MIN_DISTANCE_BETWEEN)
 		@robots.push(robot)
 		
+	detectRobotCrashes: ->
+		for robot1 in @robots
+			for robot2 in @robots
+				if (robot1.distanceTo(robot2) < 32) && (robot1 != robot2)
+					robot1.health -= 0.1
+		
 	tick: ->
 		@ctx.clearRect(0, 0, @width, @height)
-		for robot in @robots		
-			robot.work()
-			robot.move()
+		for robot in @robots
+			if robot.alive
+				dataRow = $("#bots .bot#{robot.rid} .stats")
+				if robot.health > 0
+					robot.work()
+					robot.move()
+					@detectRobotCrashes()
+					dataRow.find('.health SPAN').text(Math.floor(robot.health))
+					dataRow.find('.speed SPAN').text(robot.speed.toFixed(1))
+					dataRow.find('.heading SPAN').text(robot.heading)
+				else
+					robot.alive = false
+					Robot.numberAlive -= 1
+					if Robot.numberAlive == 0
+						window.arena.pause()
+					robot.sprite.src = '/images/white.png'
+					dataRow.text('DEAD!!!').addClass('dead')
 		for projectile in @projectiles
-			projectile.move()
+			if projectile.active
+				projectile.move()
+			if projectile.exploding
+				for robot in @robots
+					robot.health -= 20 if Math.floor(Math.sqrt(Math.pow(robot.x - projectile.x, 2) + Math.pow(robot.y - projectile.y, 2))) < 100
 		@draw()
 		setTimeout window.tick, 1000 / FPS if !@paused
 
@@ -60,19 +85,37 @@ class Arena
 		for robot in @robots
 			if robot.ready
 				@ctx.drawImage robot.sprite, robot.x, robot.y
+		for projectile in @projectiles
+			if projectile.active
+				@ctx.drawImage projectile.sprite, projectile.x, projectile.y
+			if projectile.exploding
+				@ctx.drawImage projectile.explosion, projectile.x - 50, projectile.y - 50
+				projectile.exploding = false
 			
 
 class Robot
+	this.numberAlive = 0
+	importCode: (code) ->
+		code = "window.robot = {\n#{code}}\n"
+		CoffeeScript.eval code
+		@work = window.robot.work
+		@name = window.robot.name
+		@creator = window.robot.creator
+		@data = window.robot.data
+		$("#bots .bot#{@rid} .name").text(@name)
 	constructor: (options) ->
-		@name = options.name
+		@name = ''
+		@rid = options.rid
 		@ready = false
 		@sprite = new Image
 		@sprite.src = "images/#{options.sprite}"
 		@x = 0
 		@y = 0
+		@alive = true
+		Robot.numberAlive += 1
 		@heading = 0
 		@speed = 0
-		@strength = 100
+		@health = 100
 		@targetSpeed = 0
 		@width = 32
 		@height = 32
@@ -81,24 +124,22 @@ class Robot
 			@width = @sprite.width
 			@height = @sprite.height
 			@ready = true
-		if options.load
-			$.get options.load,
-				{},
-				(data) =>
-					code = "window.robot = {\n#{data}}\n"
-					CoffeeScript.eval code
-					@work = window.robot.work
-					@name = window.robot.name
-					@creator = window.robot.creator
-					@data = window.robot.data
+		if options.code
+			if options.code.match /^\//
+				$.get options.code,
+					{},
+					(data) =>
+						@importCode(data)
+			else
+				@importCode(options.code)
 	move: ->
 		dx = Math.sin((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
 		dy = Math.cos((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
-		if @speed != @targetSpeed
+		if Math.round(@speed) != Math.round(@targetSpeed)
 			if @speed < @targetSpeed
 				@speed += 0.1
 			else
-				@speed -= 0.2
+				@speed -= 0.1
 		if ((@x + dx) < (arena.width - @width)) && (@x + dx > 0)
 			@x += dx
 		else
@@ -116,45 +157,78 @@ class Robot
 		speed = 4 if speed > 4
 		@targetSpeed = speed
 		@heading = heading
+	shoot: (heading, range) =>
+		window.arena.projectiles.push(new Projectile { robot: this, heading: heading, range: range })
+	scan: (heading, resolution) ->
+		for robot in window.arena.robots
+			if robot != this
+				angle = (360 + (Math.atan2(robot.x - @x, robot.y - @y) * 57.295)) % 360
+				if angle > (heading - resolution) && angle < (heading + resolution)
+					return Math.floor(Math.sqrt(Math.pow(robot.x - @x, 2) + Math.pow(robot.y - @y, 2)))
+		return 0
 		
-	
 	
 class Projectile
 	constructor: (options) ->
 		@robot = options.robot
-		@active = false
-		@speed = 1
-		@x = 0
-		@y = 0
-		@heading = 0
-		@speed = 0
-		@ttl = 0
-		@angle = options.angle
+		@x = options.robot.x
+		@y = options.robot.y
+		@heading = options.heading
+		@speed = 5
+		@range = options.range
+		@active = true
+		@exploding = false
+		@sprite = new Image
+		@sprite.src = "images/projectile.png"
+		@explosion = new Image
+		@explosion.src = "images/explosion.png"
 	move: ->
+		dx = Math.sin((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
+		dy = Math.cos((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
+		@x += dx
+		@y += dy
+		@range -= @speed
+		if @range < 0			
+			@active = false
+			@exploding = true
+		if @x < 0 || @x > window.arena.width || @y < 0 || @y > window.arena.height
+			@active = false
 		
-	
 		
 $ ->
-	arena = new Arena
+	window.arena = new Arena
+	arena = window.arena
 	$('#controls button').attr('disabled', true)
 	window.globs = {}
-	colorId = 0
-	$('button#addbot').click ->
-		r = new Robot { name: 'simple', sprite: SPRITES[colorId], load: '/bots/simple.bot' }
-		arena.addRobot(r)
-		colorId += 1
+	botId = 0
+	updateControls = ->
 		$('#controls button').attr('disabled', false) if arena.robots.length > 1
-		$(this).attr('disabled', true) if arena.robots.length == MAX_PLAYERS
+		$('button#addbot').attr('disabled', true) if arena.robots.length == MAX_PLAYERS	
+	addbot = (code = '/bots/simple.bot') ->
+		sprite = SPRITES[botId]
+		r = new Robot { sprite: sprite, code: code, rid: botId }
+		botDataRow = $('#bots .bot:first').clone().show().addClass("bot#{r.rid}");
+		$(botDataRow).find('img:first').attr('src', "/images/#{sprite}");
+		$('#bots').append(botDataRow);
+		botId += 1
+		arena.addRobot(r)
+		updateControls()
 		setTimeout arena.draw, 50
-		setTimeout arena.draw, 150
+		# Slightly hacky cheat because I can't be arsed with hooking up the callback atm
+		setTimeout arena.draw, 250
+	$('button#addbot').click =>
+		addbot()
 	$('button#run').click ->
 		$(this).attr('disabled', true)
+		$('button#addbot').attr('disabled', true)
 		arena.run()
 	$('button#reset').click ->
 		$('#controls button').attr('disabled', true)
 		$('button#addbot').attr('disabled', false)
-		colorId = 0
+		botId = 0
 		arena.reset()
+		# Nasty hack just for 'get the hack done' sakes..
+		window.location.reload()
 	$('button#pause').click ->
 		if arena.paused
 			arena.unpause()
@@ -162,4 +236,8 @@ $ ->
 		else
 			arena.pause()
 			$(this).text('Resume')
+	addbot('/bots/simple.bot')
+	addbot('/bots/simple2.bot')
+	addbot('/bots/bonkers.bot')
+	addbot('/bots/bonkers.bot')
 	

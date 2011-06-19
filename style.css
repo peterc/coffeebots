@@ -3,6 +3,7 @@ body {
 	font-family: 'Helvetica Neue', 'Trebuchet MS', Arial, sans-serif;
 	color: #222;
 	font-size: 18px;
+	margin: 12px;
 }
 
 A { 
@@ -37,5 +38,45 @@ A {
 #bots .bot {
 	border-bottom: 1px solid #ddd;
 	padding: 8px;
-	font-size: 14px;
+	font-size: 15px;
+	min-height: 32px;
 }
+
+#bots .bot IMG {
+	vertical-align: middle;
+	max-width: 32px;
+	max-height: 32px;
+	float: left;
+	margin-right: 16px;
+}
+
+.bot .name {
+	font-weight: bold;
+	float: left;
+	margin-right: 20px;
+}
+
+#addbot {
+	float: right;
+}
+
+.bot .stats {
+	float: right;
+}
+
+.bot .stats DIV {
+	width: 100px;
+}
+
+.bot .stats.dead {
+	color: #c00;
+	font-weight: bold;
+	font-size: 1.1em;
+}
+
+.choosebot, .stats div {
+	float: left;
+	margin-right: 12px;
+}
+
+.choosebot { display: none; }

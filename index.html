@@ -21,9 +21,20 @@
 		<canvas id="arena" width="800" height="450"></canvas>		
 		
 		<div id="botlist" class="contained">
+			<div style="height: 32px"><button id="addbot">+ Add Robot</button></div>
+			
 			<div id="bots">
+				<div class="bot" style="display: none">
+					<img src="/images/white.png" style="vertical-align: middle" />
+					<div class="name"></div>
+					<div class="choosebot">Choose bot: <select name="code"><option>simple.bot</option><option>simple2.bot</option></select></div>
+					<div class="stats">
+						<div class="health">Health: <span>100</span></div>
+						<div class="heading">Heading: <span>0</span>&deg;</div>
+						<div class="speed">Speed: <span>0.0</span></div>
+					</div>
+				</div>
 			</div>
-			<button id="addbot">Add Robot</button>
 		</div>
 	</body>
 </html>

@@ -1,11 +1,9 @@
-name: 'simple'
+name: 'Simple'
 work: ->
 	opt = Math.floor(Math.random() * 100)
 	if opt == 0 || @x < 10 || @y < 10
-		randomHeading = Math.floor(Math.random() * 180)
-		if @y < (arena.height / 2)
-			randomHeading += 180
-		if @x > (arena.width / 2)
-			randomHeading += 90
-		randomSpeed = Math.floor(Math.random() * 3) + 1
+		randomHeading = @rand(360)
+		randomSpeed = @rand(4) + 1
 		@drive(randomHeading, randomSpeed)
+	if opt == 50
+		@shoot(@rand(360), 300)

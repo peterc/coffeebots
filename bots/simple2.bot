@@ -1,0 +1,27 @@
+name: 'Simple2'
+data: { tick: 0 }
+work: ->
+	@data.tick += 1
+	if (@data.tick % 100) == 0
+		angle = @rand(360)
+		#range = @scan(angle, 40)
+		#if range > 0
+		@shoot(angle, @rand(200) + 200)
+	if (@data.tick % 30) == 0
+		randomHeading = @rand(360)
+		randomSpeed = @rand(4) + 1
+		if @x < 100 
+			randomHeading = 0
+			randomSpeed = 4
+		if @x > 700
+			randomHeading = 180
+			randomSpeed = 4
+		if @y < 100
+			randomHeading = 270
+			randomSpeed = 4
+		if @y > 400
+			randomHeading = 90
+			randomSpeed = 4
+		@drive(randomHeading, randomSpeed)
+		
+	
