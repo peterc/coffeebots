@@ -2,38 +2,39 @@
 <html>
 	<head>
 		<title>Coffeebots: CoffeeScript Powered Robot Wars</title>
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/assets/style.css">
 		<script type="text/javascript" src="/vendor/jquery.min.js"></script>
 		<script type="text/javascript" src="/vendor/jquery.simplemodal-1.4.1.js"></script>
 		<script type="text/javascript" src="/vendor/coffee-script.js"></script>
 		<script type="text/coffeescript" src="coffeebots.coffee"></script>
 	</head>
 	<body>
-		<div id="header" class="contained">
-			<div id="controls">
-				<button id="run">START BATTLE!</button>
-				<button id="pause">Pause</button>
-				<button id="reset">Reset</button>
+		<div id="container">
+			<div id="header">
+				<div id="controls">
+					<button id="run">START BATTLE!</button>
+					<button id="pause">Pause</button>
+					<button id="reset">Reset</button>
+				</div>
+				<div class="title"><strong><span class="coffee">Coffee</span>bots</strong> (<a href="https://github.com/peterc/coffeebots">source</a>)</div>
 			</div>
-			<div class="title"><strong><span class="coffee">Coffee</span>bots</strong> (<a href="https://github.com/peterc/coffeebots">source</a>)</div>
-		</div>
-
-		<canvas id="arena" width="800" height="450"></canvas>		
-		
-		<div id="botlist" class="contained">
-			<div style="height: 32px"><button id="addbot">+ Add Robot</button></div>
+    	
+			<canvas id="arena" width="640" height="600"></canvas>		
 			
-			<div id="bots">
-				<div class="bot" style="display: none">
-					<img src="/images/white.png" style="vertical-align: middle" />
-					<div class="name"></div>
-					<div class="choosebot">Choose bot: <select name="code"><option>simple.bot</option><option>simple2.bot</option></select></div>
-					<div class="stats">
-						<div class="health">Health: <span>100</span></div>
-						<div class="heading">Heading: <span>0</span>&deg;</div>
-						<div class="speed">Speed: <span>0.0</span></div>
+			<div id="botlist" class="contained">			
+				<div id="bots">
+					<div class="bot" style="display: none">
+						<div class="colorbox"></div>
+						<div class="name"></div>
+						<div class="choosebot">Choose bot: <select name="code"><option>simple.bot</option><option>simple2.bot</option></select></div>
+						<div class="stats">
+							<div class="health"><span>100</span>%</div>
+							<div class="heading"><span>0</span>&deg;</div>
+							<div class="speed"><span>0.0</span>mph</div>
+						</div>
 					</div>
 				</div>
+				<div style="height: 32px"><button id="addbot">+ Add Robot</button></div>
 			</div>
 		</div>
 	</body>

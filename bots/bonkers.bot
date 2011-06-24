@@ -1,8 +1,0 @@
-name: 'BONKERS TOWER'
-data: { tick: 0 }
-work: ->
-	@data.tick += 1
-	if (@data.tick % 25) == 0
-		angle = @rand(360)
-		range = @rand(200) + 150
-		@shoot(angle, range)

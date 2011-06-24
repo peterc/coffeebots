@@ -1,9 +1,10 @@
 FPS = 45
-MIN_DISTANCE_BETWEEN = 100
-SPRITES = ['yellow.png', 'red.png', 'purple.png', 'green.png', 'blue.png']
+MIN_DISTANCE_BETWEEN = 150
+COLORS = ['#c00', '#c0c', '#dd0', '#0c0', '#09c', '#009', '#333', '#7b0']
 DEGREES_IN_ONE_RADIAN = 57.295800000006835
-MAX_PLAYERS = 5
+MAX_PLAYERS = 8
 BOT_FILES = ['simple.bot']
+SHOT_DELAY = FPS
 
 class Arena
 	constructor: (@canvasId = 'arena') ->
@@ -38,20 +39,21 @@ class Arena
 			min = 1000
 			robot.x = Math.floor(Math.random() * (@width - 32))
 			robot.y = Math.floor(Math.random() * (@height - 32))
-			break if @robots.length is 0
+			break if @robots.length == 0
 			for otherrobot in @robots
 				next if otherrobot is robot
 				distance = robot.distanceTo(otherrobot)
 				if distance < min
 					min = distance
 			break if (@robots.length > 0) && (min > MIN_DISTANCE_BETWEEN)
-		@robots.push(robot)
+		@robots.push robot
 		
 	detectRobotCrashes: ->
 		for robot1 in @robots
-			for robot2 in @robots
-				if (robot1.distanceTo(robot2) < 32) && (robot1 != robot2)
-					robot1.health -= 0.1
+			if robot1.alive
+				for robot2 in @robots
+					if (robot1.distanceTo(robot2) < 32) && (robot1 != robot2) && (robot2.alive)
+						robot1.health -= 0.1
 		
 	tick: ->
 		@ctx.clearRect(0, 0, @width, @height)
@@ -68,26 +70,49 @@ class Arena
 				else
 					robot.alive = false
 					Robot.numberAlive -= 1
-					if Robot.numberAlive == 0
+					console.log Robot.numberAlive
+					if Robot.numberAlive == 1
 						window.arena.pause()
-					robot.sprite.src = '/images/white.png'
+					robot.color = '#ccc'
 					dataRow.text('DEAD!!!').addClass('dead')
 		for projectile in @projectiles
 			if projectile.active
 				projectile.move()
 			if projectile.exploding
 				for robot in @robots
-					robot.health -= 20 if Math.floor(Math.sqrt(Math.pow(robot.x - projectile.x, 2) + Math.pow(robot.y - projectile.y, 2))) < 100
+					distance_away = Math.floor(Math.sqrt(Math.pow(robot.x - projectile.x, 2) + Math.pow(robot.y - projectile.y, 2)))
+					if distance_away < 20
+						robot.health -= 24
+					else if distance_away < 50
+						robot.health -= 12
+					else if distance_away < 100
+						robot.health -= 5
 		@draw()
 		setTimeout window.tick, 1000 / FPS if !@paused
 
 	draw: =>
 		for robot in @robots
-			if robot.ready
-				@ctx.drawImage robot.sprite, robot.x, robot.y
+			tx = robot.x + (robot.width / 2)
+			ty = robot.y + (robot.height / 2)
+			tr = robot.heading / DEGREES_IN_ONE_RADIAN
+			@ctx.save()
+			@ctx.translate tx, ty
+			@ctx.rotate tr
+			@ctx.beginPath()
+			@ctx.moveTo(-(robot.width / 2), (robot.height / 2))
+			@ctx.lineTo((robot.width / 2), (robot.height / 2))
+			@ctx.lineTo(0, -(robot.height / 2))
+			@ctx.lineTo(-(robot.width / 2), (robot.height / 2))
+			@ctx.fillStyle = robot.color
+			@ctx.fill()
+			@ctx.restore()
 		for projectile in @projectiles
 			if projectile.active
-				@ctx.drawImage projectile.sprite, projectile.x, projectile.y
+				@ctx.beginPath()
+				@ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI*2, true)
+				@ctx.closePath()
+				@ctx.fillStyle = '#666'
+				@ctx.fill()
 			if projectile.exploding
 				@ctx.drawImage projectile.explosion, projectile.x - 50, projectile.y - 50
 				projectile.exploding = false
@@ -106,24 +131,19 @@ class Robot
 	constructor: (options) ->
 		@name = ''
 		@rid = options.rid
-		@ready = false
-		@sprite = new Image
-		@sprite.src = "images/#{options.sprite}"
 		@x = 0
 		@y = 0
 		@alive = true
 		Robot.numberAlive += 1
 		@heading = 0
 		@speed = 0
+		@color = options.color
 		@health = 100
 		@targetSpeed = 0
-		@width = 32
-		@height = 32
+		@shotDelay = 0
+		@width = 16
+		@height = 24
 		@codeLoaded = false
-		@sprite.onload = =>
-			@width = @sprite.width
-			@height = @sprite.height
-			@ready = true
 		if options.code
 			if options.code.match /^\//
 				$.get options.code,
@@ -133,13 +153,14 @@ class Robot
 			else
 				@importCode(options.code)
 	move: ->
-		dx = Math.sin((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
-		dy = Math.cos((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
+		@shotDelay-- if @shotDelay > 0
+		dx = Math.sin(@heading / DEGREES_IN_ONE_RADIAN) * @speed
+		dy = Math.cos(@heading / DEGREES_IN_ONE_RADIAN) * @speed * -1
 		if Math.round(@speed) != Math.round(@targetSpeed)
 			if @speed < @targetSpeed
-				@speed += 0.1
+				@speed += 0.05
 			else
-				@speed -= 0.1
+				@speed -= 0.05
 		if ((@x + dx) < (arena.width - @width)) && (@x + dx > 0)
 			@x += dx
 		else
@@ -158,11 +179,13 @@ class Robot
 		@targetSpeed = speed
 		@heading = heading
 	shoot: (heading, range) =>
-		window.arena.projectiles.push(new Projectile { robot: this, heading: heading, range: range })
+		if @shotDelay == 0
+			@shotDelay = SHOT_DELAY
+			window.arena.projectiles.push(new Projectile { robot: this, heading: heading, range: range })
 	scan: (heading, resolution) ->
 		for robot in window.arena.robots
-			if robot != this
-				angle = (360 + (Math.atan2(robot.x - @x, robot.y - @y) * 57.295)) % 360
+			if robot != this && robot.alive
+				angle = Math.atan2(robot.x - @x, (robot.y - @y) * -1) * DEGREES_IN_ONE_RADIAN
 				if angle > (heading - resolution) && angle < (heading + resolution)
 					return Math.floor(Math.sqrt(Math.pow(robot.x - @x, 2) + Math.pow(robot.y - @y, 2)))
 		return 0
@@ -178,13 +201,11 @@ class Projectile
 		@range = options.range
 		@active = true
 		@exploding = false
-		@sprite = new Image
-		@sprite.src = "images/projectile.png"
 		@explosion = new Image
-		@explosion.src = "images/explosion.png"
+		@explosion.src = "assets/explosion.png"
 	move: ->
-		dx = Math.sin((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
-		dy = Math.cos((@heading + 90) / DEGREES_IN_ONE_RADIAN) * @speed
+		dx = Math.sin(@heading / DEGREES_IN_ONE_RADIAN) * @speed
+		dy = Math.cos(@heading / DEGREES_IN_ONE_RADIAN) * @speed * -1
 		@x += dx
 		@y += dy
 		@range -= @speed
@@ -204,11 +225,11 @@ $ ->
 	updateControls = ->
 		$('#controls button').attr('disabled', false) if arena.robots.length > 1
 		$('button#addbot').attr('disabled', true) if arena.robots.length == MAX_PLAYERS	
-	addbot = (code = '/bots/simple.bot') ->
-		sprite = SPRITES[botId]
-		r = new Robot { sprite: sprite, code: code, rid: botId }
+	addbot = (code = '/bots/scanner.bot') ->
+		color = COLORS[botId]
+		r = new Robot { color: color, code: code, rid: botId }
 		botDataRow = $('#bots .bot:first').clone().show().addClass("bot#{r.rid}");
-		$(botDataRow).find('img:first').attr('src', "/images/#{sprite}");
+		$(botDataRow).find('.colorbox').css('background-color', "#{color}");
 		$('#bots').append(botDataRow);
 		botId += 1
 		arena.addRobot(r)
@@ -236,8 +257,9 @@ $ ->
 		else
 			arena.pause()
 			$(this).text('Resume')
-	addbot('/bots/simple.bot')
-	addbot('/bots/simple2.bot')
-	addbot('/bots/bonkers.bot')
-	addbot('/bots/bonkers.bot')
+	addbot('/bots/wanderer.bot')
+	addbot('/bots/scanner.bot')
+	addbot('/bots/scanner.bot')
+	addbot('/bots/tower.bot')
+	addbot('/bots/pain.bot')
 	

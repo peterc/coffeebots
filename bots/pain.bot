@@ -1,0 +1,6 @@
+name: 'PAIN'
+work: ->
+	angle = @rand(360)
+	range = @rand(300) + 100
+	@shoot(angle, range)
+		

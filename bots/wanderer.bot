@@ -1,9 +1,9 @@
-name: 'Simple'
+name: 'Wanderer'
 work: ->
-	opt = Math.floor(Math.random() * 100)
-	if opt == 0 || @x < 10 || @y < 10
+	r = @rand(200)
+	if r == 0
 		randomHeading = @rand(360)
 		randomSpeed = @rand(4) + 1
 		@drive(randomHeading, randomSpeed)
-	if opt == 50
+	if r > 195
 		@shoot(@rand(360), 300)
