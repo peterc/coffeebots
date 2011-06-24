@@ -11,7 +11,7 @@ A {
 }
 
 #container {
-	width: 960px;
+	width: 1020px;
 	margin: 12px auto;
 }
 
@@ -69,6 +69,16 @@ A {
 	margin-left: 148px;
 	font-size: 12px;
 	font-family: verdana, arial, sans-serif;
+}
+
+.bot .code {
+	clear: left;
+	width: 290px;
+	height: 90px;
+	max-height: 600px;
+	margin-left: 50px;
+	font-family: Menlo, Monaco, "Liberation Mono", Consolas, "Droid Sans Mono", courier, monospace;
+	font-size: 10px;
 }
 
 .bot .stats DIV {

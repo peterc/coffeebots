@@ -1,14 +1,15 @@
 name: 'scanner'
 data: { tick: 0 }
 work: ->
-	@data.tick += 1
-	angle = @rand(360)
-	range = @scan(angle, 1)
-	if range > 0
-		@shoot(angle, range)
-	if @rand(100) == 0 || @data.tick == 1
-		randomHeading = @rand(360)
-		randomSpeed = @rand(4) + 1
-		@drive(randomHeading, randomSpeed)
+  @data.tick += 1
+  if @data.tick % 10 == 0
+    angle = @rand(360)
+    range = @scan(angle, 30)
+    if range > 0
+      @shoot(angle + 15, range)
+  if @rand(100) == 0 || @data.tick == 1
+    randomHeading = @rand(360)
+    randomSpeed = @rand(4) + 2
+    @drive(randomHeading, randomSpeed)
 		
 	

@@ -1,10 +1,10 @@
-FPS = 45
-MIN_DISTANCE_BETWEEN = 150
-COLORS = ['#c00', '#c0c', '#dd0', '#0c0', '#09c', '#009', '#333', '#7b0']
-DEGREES_IN_ONE_RADIAN = 57.295800000006835
-MAX_PLAYERS = 8
-BOT_FILES = ['simple.bot']
-SHOT_DELAY = FPS
+FPS 										= 60
+MIN_DISTANCE_BETWEEN 		= 150
+COLORS 									= ['#c00', '#c0c', '#dd0', '#0c0', '#09c', '#009', '#333', '#7b0']
+DEGREES_IN_ONE_RADIAN 	= 57.295800000006835
+MAX_PLAYERS 						= 8
+SHOT_DELAY 							= FPS
+MAXIMUM_SCAN_RANGE 			= 350
 
 class Arena
 	constructor: (@canvasId = 'arena') ->
@@ -84,9 +84,9 @@ class Arena
 					if distance_away < 20
 						robot.health -= 24
 					else if distance_away < 50
-						robot.health -= 12
+						robot.health -= 18
 					else if distance_away < 100
-						robot.health -= 5
+						robot.health -= 8
 		@draw()
 		setTimeout window.tick, 1000 / FPS if !@paused
 
@@ -111,10 +111,15 @@ class Arena
 				@ctx.beginPath()
 				@ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI*2, true)
 				@ctx.closePath()
-				@ctx.fillStyle = '#666'
+				@ctx.fillStyle = projectile.robot.color
 				@ctx.fill()
 			if projectile.exploding
-				@ctx.drawImage projectile.explosion, projectile.x - 50, projectile.y - 50
+				@ctx.beginPath()
+				@ctx.arc(projectile.x, projectile.y, 50, 0, Math.PI*2, true)
+				@ctx.closePath()
+				@ctx.fillStyle = projectile.robot.color
+				@ctx.fill()
+				#@ctx.drawImage projectile.explosion, projectile.x - 50, projectile.y - 50
 				projectile.exploding = false
 			
 
@@ -165,10 +170,12 @@ class Robot
 			@x += dx
 		else
 			@speed = 0
+			@targetSpeed = 0
 		if ((@y + dy) < (arena.height - @height)) && (@y + dy > 0)
 			@y += dy
 		else
 			@speed = 0
+			@targetSpeed = 0
 	distanceTo: (otherbot) ->
 		Math.floor(Math.sqrt(Math.pow(otherbot.x - @x, 2) + Math.pow(otherbot.y - @y, 2)))
 	rand: (limit) ->
@@ -180,14 +187,23 @@ class Robot
 		@heading = heading
 	shoot: (heading, range) =>
 		if @shotDelay == 0
-			@shotDelay = SHOT_DELAY
+			@shotDelay = Math.round(SHOT_DELAY * (1 + (@speed / 3)))
 			window.arena.projectiles.push(new Projectile { robot: this, heading: heading, range: range })
 	scan: (heading, resolution) ->
+		#dx = Math.sin(heading / DEGREES_IN_ONE_RADIAN) * MAXIMUM_SCAN_RANGE
+		#dy = Math.cos(heading / DEGREES_IN_ONE_RADIAN) * -MAXIMUM_SCAN_RANGE
+		window.arena.ctx.beginPath()
+		window.arena.ctx.arc(@x + @width / 2, @y + @height / 2, MAXIMUM_SCAN_RANGE, (heading - resolution) / DEGREES_IN_ONE_RADIAN, (heading + resolution) / DEGREES_IN_ONE_RADIAN )
+		window.arena.ctx.lineTo(@x + @width / 2, @y + @height / 2)
+		window.arena.ctx.closePath()
+		window.arena.ctx.fillStyle = 'rgba(0, 128, 0, 0.05)'
+		window.arena.ctx.fill()
 		for robot in window.arena.robots
 			if robot != this && robot.alive
-				angle = Math.atan2(robot.x - @x, (robot.y - @y) * -1) * DEGREES_IN_ONE_RADIAN
+				angle = (360 + Math.atan2(robot.x - @x, (robot.y - @y) * -1) * DEGREES_IN_ONE_RADIAN) % 360
 				if angle > (heading - resolution) && angle < (heading + resolution)
-					return Math.floor(Math.sqrt(Math.pow(robot.x - @x, 2) + Math.pow(robot.y - @y, 2)))
+					r = Math.floor(Math.sqrt(Math.pow(robot.x - @x, 2) + Math.pow(robot.y - @y, 2)))
+					return r if r < MAXIMUM_SCAN_RANGE
 		return 0
 		
 	
@@ -225,18 +241,23 @@ $ ->
 	updateControls = ->
 		$('#controls button').attr('disabled', false) if arena.robots.length > 1
 		$('button#addbot').attr('disabled', true) if arena.robots.length == MAX_PLAYERS	
-	addbot = (code = '/bots/scanner.bot') ->
-		color = COLORS[botId]
-		r = new Robot { color: color, code: code, rid: botId }
-		botDataRow = $('#bots .bot:first').clone().show().addClass("bot#{r.rid}");
-		$(botDataRow).find('.colorbox').css('background-color', "#{color}");
-		$('#bots').append(botDataRow);
-		botId += 1
-		arena.addRobot(r)
-		updateControls()
-		setTimeout arena.draw, 50
-		# Slightly hacky cheat because I can't be arsed with hooking up the callback atm
-		setTimeout arena.draw, 250
+	addbot = (url = '/bots/scanner.bot') ->
+		$.get url,
+			{},
+			(data) =>
+				color = COLORS[botId]
+				code = data
+				botDataRow = $('#bots .bot:first').clone().show().addClass("bot#{botId}");
+				$(botDataRow).find('.colorbox').css('background-color', "#{color}");
+				$(botDataRow).find('.code').text(code);
+				$('#bots').append(botDataRow);
+				r = new Robot { color: color, code: code, rid: botId }
+				botId += 1
+				arena.addRobot(r)
+				updateControls()
+				arena.draw
+				# Slightly hacky cheat because I can't be arsed with hooking up the callback atm
+				#setTimeout arena.draw, 250
 	$('button#addbot').click =>
 		addbot()
 	$('button#run').click ->

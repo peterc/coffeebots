@@ -1,8 +1,8 @@
 name: 'TOWER'
 data: { seekAngle: 0 }
 work: ->
-	@data.seekAngle += 10
-	@data.seekAngle = @data.seekAngle % 360
-	range = @scan(@data.seekAngle, 20)
-	if range > 0
-		@shoot(@data.seekAngle, range)
+  @data.seekAngle += 5
+  @data.seekAngle = @data.seekAngle % 360
+  range = @scan(@data.seekAngle, 10)
+  if range > 0
+    @shoot(@data.seekAngle + 3, range)
